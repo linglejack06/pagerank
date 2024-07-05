@@ -19,6 +19,7 @@ def main():
     print(f"PageRank Results from Iteration")
     for page in sorted(ranks):
         print(f"  {page}: {ranks[page]:.4f}")
+    print(f"sum is {sum(ranks.values())}")
 
 
 def crawl(directory):
@@ -69,7 +70,7 @@ def transition_model(corpus, page, damping_factor):
     probabilities = dict.fromkeys(corpus.keys(), 0)
     for key in probabilities:
         if key in corpus[page]:
-            probabilities[key] += damping_factor/len(corpus[page])
+            probabilities[key] += damping_factor / len(corpus[page])
         probabilities[key] += (1 - damping_factor) / page_count
 
     return probabilities
@@ -85,7 +86,7 @@ def sample_pagerank(corpus, damping_factor, n):
     PageRank values should sum to 1.
     """
 
-    visits = { page: 0 for page in corpus }
+    visits = {page: 0 for page in corpus}
     sample = random.choice(list(visits))
     visits[sample] += 1
 
@@ -100,9 +101,10 @@ def sample_pagerank(corpus, damping_factor, n):
         visits[sample] += 1
 
     # convert to probabilities
-    probability_distribution = { page: visits[page] / n for page in corpus.keys() }
+    probability_distribution = {page: visits[page] / n for page in corpus.keys()}
 
     return probability_distribution
+
 
 def iterate_pagerank(corpus, damping_factor):
     """
@@ -113,7 +115,33 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    raise NotImplementedError
+    page_ranks = {page: 1 / len(corpus) for page in corpus}
+    max_change = 1 / len(corpus)
+
+    while max_change > 0.001:
+        max_change = 0
+        new_ranks = {page: 0 for page in corpus}
+        for p in page_ranks:
+            prev_rank = page_ranks[p]
+            new_ranks[p] = ((1 - damping_factor) / len(corpus))
+            link_probability = 0
+            for i in corpus:
+                # if no links then assume link to all pages
+                if len(corpus[i]) == 0:
+                    link_probability += page_ranks[i] / len(corpus)
+                elif p in corpus[i]:
+                    link_probability += page_ranks[i] / len(corpus[i])
+
+            # add link probability summation to page rank
+            link_probability *= damping_factor
+            new_ranks[p] += link_probability
+            # check change to stop loop if done
+            if abs(new_ranks[p] - prev_rank) > max_change:
+                max_change = abs(new_ranks[p] - prev_rank)
+
+        page_ranks = new_ranks.copy()
+
+    return page_ranks
 
 
 if __name__ == "__main__":
